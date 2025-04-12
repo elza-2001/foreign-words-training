@@ -25,10 +25,10 @@ const studyMode = document.querySelector("#study-mode");
 const shuffleButton = document.querySelector("#shuffle-words");
 totalWord.textContent = cards.length;
 let currentCardIndex = 1;
-let shuffleWords = [...cards];
+const shuffleWords = [...cards];
 
 function activeCard(array) {
-    let card = array[currentCardIndex - 1];
+    const card = array[currentCardIndex - 1];
     cardFront.textContent = card.en;
     cardBack.textContent = card.ru;
     cardExample.textContent = card.example;
@@ -69,11 +69,12 @@ activeCard(cards);
 const examMode = document.querySelector("#exam-mode");
 const sliderControls = document.querySelector(".slider-controls");
 const examCardsContainer = document.querySelector("#exam-cards");
-let examProgress = document.querySelector("#exam-progress");
-let correctPercent = document.querySelector("#correct-percent");
+const examProgress = document.querySelector("#exam-progress");
+const correctPercent = document.querySelector("#correct-percent");
 let suitableCards = 0;
 let selectedWord;
-let newCards = [...cards];
+const newCards = [...cards];
+let dictionary;
 
 testButton.addEventListener('click', () => {
     startExam();
@@ -85,12 +86,12 @@ function startExam() {
     examMode.classList.remove("hidden");
     studyCardsContainer.classList.add("hidden");
 
-    const dictionary = makeDictionary();
+    makeDictionary();
     prepareCard();
 };
 
 function prepareCard() {
-    let allWords = [];
+    const allWords = [];
     newCards.forEach(function(item) {
         delete item.example;
         const values = Object.values(item);
@@ -111,15 +112,15 @@ function createCards(text) {
     examCard.textContent = text;
 
     examCard.addEventListener("click", function() {
-        if (!selectedWord) {
+        if (selectedWord == null) {
             selectedWord = this;
             selectedWord.classList.add("correct");
         } else {
             if (dictionary[selectedWord.textContent] === this.textContent) {
-                this.classList.add("correct");
-                this.classList.add("fade-out");
-                selectedWord.classList.add("fade-out");
-                selectedWord = !selectedWord;
+                this.classList.add("correct", "fade-out", "hidden");
+                selectedWord.classList.add("fade-out", "hidden");
+                console.log(this)
+                selectedWord = null;
                 suitableCards++;
                 examProgress.value = (suitableCards / cards.length) * 100;
                 correctPercent.textContent = Math.ceil(+examProgress.value) + "%";
@@ -128,15 +129,16 @@ function createCards(text) {
                 setTimeout(() => {
                     selectedWord.classList.remove("correct");
                     this.classList.remove("wrong");
-                    selectedWord = !selectedWord;
+                    selectedWord = null;
                 }, 500)
             }
         };
 
         if (suitableCards === cards.length) {
             clearInterval(timerId);
-            resultsModal.classList.remove("hidden");
-            setTimeout(createResults, 500);
+            setTimeout(() => {
+                alert("Экзамен пройден!")
+            }, 500);
         };
     });
 
@@ -144,18 +146,16 @@ function createCards(text) {
 };
 
 function makeDictionary() {
-    let pairWords = [];
+    const pairWords = [];
 
     newCards.forEach((item) => {
         delete item.example;
         const values = Object.values(item);
-        let reversed = Object.values(item);
-        reversed = reversed.reverse();
+        const reversed = Object.values(item);
+        reversed.reverse();
         pairWords.push(values, reversed);
         dictionary = Object.fromEntries(pairWords);
     });
-
-    return dictionary;
 };
 
 const timer = document.querySelector("#time");
@@ -182,28 +182,4 @@ function format(val) {
         return `0${val}`
     }
     return val;
-};
-
-//////////////
-const resultsModal = document.querySelector(".results-modal");
-const timerResult = document.querySelector("#timer");
-const wordStatsTemplate = document.querySelector("#word-stats");
-const resultsContent = document.querySelector(".results-content");
-const resultTime = document.querySelector("#timer");
-const resultCards = [...cards];
-
-function createTemplate(str) {
-    const userResult = wordStatsTemplate.content.cloneNode(true);
-    userResult.querySelector(".word span").textContent = str.en
-    userResult.querySelector(".attempts span").textContent = str.count;
-
-    resultsContent.append(userResult);
-};
-
-function createResults() {
-    resultCards.forEach((item) => {
-        const resultLine = createTemplate(item);
-    });
-
-    resultTime.textContent = time;
 };
